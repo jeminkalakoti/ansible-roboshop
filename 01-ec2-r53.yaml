@@ -8,6 +8,9 @@
     domain_name: "kalakoti.fun"
     instances: 
     - mongodb
+    - redis
+    - mysql
+    - rabbitmq
   tasks:
   - name: create ec2 insatnce
     amazon.aws.ec2_instance:
