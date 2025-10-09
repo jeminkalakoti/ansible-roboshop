@@ -12,14 +12,14 @@
       name: mongodb-org
       state: present
   
-  - name: allowig all ports
+  - name: allowig remote connections
     ansible.builtin.replace:
       path: /etc/mongodb.conf
-      regexp: 127.0.0.1
-      replace: 0.0.0.0
+      regexp: '127.0.0.1'
+      replace: '0.0.0.0'
 
   - name: start and enable mongodb
     ansible.builtin.service:
-    name: mongod
-    state: started
-    enabled: yes
+      name: mongod
+      state: started
+      enabled: yes
