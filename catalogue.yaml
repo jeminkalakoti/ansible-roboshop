@@ -20,11 +20,22 @@
       system: true
       shell: /sbin/nologin
       home: /app
+
+  # Safe to remove directory, because 2nd time if we run it will download freshly. no error if does not exist
+  - name: remove app directory
+    ansible.builtin.file:
+      path: /app
+      state: absent
   
   - name: create app directory
     ansible.builtin.file:
       state: directory
       path: /app
+
+  - name: Delete catalogue file
+    ansible.builtin.file:
+      path: /tmp/catalogue.zip
+      state: absent
 
   - name: download catalogue application
     ansible.builtin.get_url:
@@ -46,16 +57,16 @@
       src: catalogue.service
       dest: /etc/systemd/system/catalogue.service
 
-  - name: daemon reload
-    ansible.builtin.service:
-      name: catalogue
-      state: daemon-reload
+  # - name: daemon reload
+  #   ansible.builtin.service:
+  #     name: catalogue
+  #     state: daemon-reload
 
-  - name: start and enable catalogue
-    ansible.builtin.service:
-      name: catalogue
-      state: started
-      enabled: yes
+  # - name: start and enable catalogue
+  #   ansible.builtin.service:
+  #     name: catalogue
+  #     state: started
+  #     enabled: yes
 
   - name: copy mongodb repo
     ansible.builtin.copy:
@@ -67,15 +78,32 @@
       name: mongodb-mongosh
       state: present
 
-  # - name: connect to mongodb catalogue
-  #   ansible.builtin.command: mongosh mongodb.kalakoti.fun --quiet --eval "db.getMongo().getDBNames().indexOf('catalogue')"
-  #   register: catalogue_output
-
-  - name: evaluate catalogue database
-    community.mongodb.mongodb_shell:
-      eval: db.getMongo().getDBNames().indexOf('catalogue')
+  - name: connect to mongodb catalogue
+    ansible.builtin.command: mongosh mongodb.kalakoti.fun --quiet --eval "db.getMongo().getDBNames().indexOf('catalogue')"
     register: catalogue_output
 
-  - name: print catalogue output
-    ansible.builtin.debug:
-      msg: "{{ catalogue_output }}"
+  # - name: evaluate catalogue database
+  #   community.mongodb.mongodb_shell:
+  #     eval: db.getMongo().getDBNames().indexOf('catalogue')
+  #   register: catalogue_output
+
+  # - name: print catalogue output
+  #   ansible.builtin.debug:
+  #     msg: "{{ catalogue_output }}"
+  
+  - name: load products into mongodb
+    ansible.builtin.shell: mongosh --host mongodb.kalakoti.fun </app/db/master-data.js
+    when: catalogue_output.stdout | int < 0
+
+  # - name: start and enable cataalogue
+  #   ansible.builtin.service:
+  #     name: catalogue
+  #     enabled: yes
+  #     state: started
+
+  - name: daemon reload enable and start
+    ansible.builtin.systemd_service:
+      name: catalogue
+      enabled: true
+      state: started
+      daemon_reload: true
