@@ -17,7 +17,7 @@
     loop: 
     - cryptography
     - PyMySQL
-    
+
   - name: create RoboShop system user
     ansible.builtin.user:
       name: roboshop
@@ -80,4 +80,11 @@
     - /app/db/schema.sql
     - /app/db/app-user.sql
     - /app/db/master-data.sql
+
+  - name: daemon reload enable and start
+    ansible.builtin.systemd_service:
+      name: shipping
+      enabled: true
+      state: started
+      daemon_reload: true
 
